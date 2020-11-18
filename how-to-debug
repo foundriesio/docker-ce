@@ -1,0 +1,33 @@
+# Initial setup
+cd $GOPATH/src/github.com/docker (mkdir if it doesn't exists)
+git clone git@github.com:docker/docker-ce.git && cd docker-ce
+git checkout 48a66213fe1747e8873f849862ff3fb981899fc6 (the current version defined in our lmp-manifest, lmp-manifest/layers/meta-virtualization/recipes-containers/docker/docker-ce_git.bb)
+ln -s $GOPATH/src/github.com/docker/docker-ce/components/cli $GOPATH/src/github.com/docker/cli
+ln -s /home/mike/go/src/github.com/docker/docker-ce/components/engine $GOPATH/src/github.com/docker/docker
+
+# Build
+cd components/engine
+make BIND_DIR=. binary
+
+# Run in a root mode
+sudo ./bundles/binary-daemon/dockerd -D -l debug --pidfile /var/run/docker-debug.pid --data-root <some-folder> --host unix:///var/run/docker-debug.sock
+
+on a client `export DOCKER_HOST=unix:///var/run/docker-debug.sock`
+
+# Run in a rootless mode
+PATH=$PWD/bundles/binary-daemon:$PATH ./bundles/binary-daemon/dockerd-rootless.sh --experimental -D -l debug --data-root $HOME/tmp
+
+on a client export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
+
+# Build for debugging
+make DOCKER_DEBUG=1 BUILDFLAGS="-gcflags=\"all=-Nl\"" BIND_DIR=. binary
+
+# Attach debugger (install https://github.com/go-delve/delve)
+
+dlv attach $(cat /run/user/1000/docker.pid)
+
+## set breakpoint
+(dlv) b github.com/docker/docker/daemon/images.(*ImageService).Images
+
+## continue
+c (continue), bt (trace)
