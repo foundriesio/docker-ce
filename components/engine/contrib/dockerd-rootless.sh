@@ -89,5 +89,5 @@ else
 	# remove the symlinks for the existing files in the parent namespace if any,
 	# so that we can create our own files in our mount namespace.
 	rm -f /run/docker /run/xtables.lock
-	exec dockerd $@
+	echo $$ && exec dockerd $@
 fi

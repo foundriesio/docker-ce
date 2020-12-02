@@ -65,6 +65,10 @@ func (daemon *Daemon) Reload(conf *config.Config) (err error) {
 	if err := daemon.reloadLiveRestore(conf, attributes); err != nil {
 		return err
 	}
+	if err := daemon.ReloadImageStore(); err != nil {
+		return err
+	}
+
 	return daemon.reloadNetworkDiagnosticPort(conf, attributes)
 }
 
